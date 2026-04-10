@@ -1,0 +1,17 @@
+title = "daily_stock_analysis local secret scan policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow known examples/docs and non-secret placeholders"
+paths = [
+  '''^\.env\.example$''',
+  '''^docs/''',
+  '''^sources/''',
+  '''^apps/dsa-web/package-lock\.json$''',
+  '''^\.github/actions/a_share_daily_secrets\.example$''',
+  '''^GITHUB_ACTIONS_SETUP_A_SHARE\.md$''',
+  '''^tests/test_anspire_search\.py$''',
+  '''^tests/test_image_stock_extractor_litellm\.py$'''
+]

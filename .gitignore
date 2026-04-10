@@ -63,6 +63,11 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# local secret scanning outputs
+.gitleaks-report.json
+.gitleaks-report.sarif
+.secrets.baseline.tmp
+
 local/
 
 run.sh
