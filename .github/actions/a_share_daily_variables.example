@@ -1,0 +1,21 @@
+# Daily A-share fundamentals push (GitHub Actions Variables)
+# Repo Settings -> Secrets and variables -> Actions -> Variables
+
+# Required business config
+STOCK_LIST=600519,300750,002594
+
+# Keep report focused on A-share daily fundamentals
+MARKET_REVIEW_REGION=cn
+REPORT_TYPE=full
+REPORT_SUMMARY_ONLY=false
+ENABLE_FUNDAMENTAL_PIPELINE=true
+MARKET_REVIEW_ENABLED=true
+TRADING_DAY_CHECK_ENABLED=true
+SINGLE_STOCK_NOTIFY=false
+
+# Stability/performance (recommended)
+MAX_WORKERS=1
+ANALYSIS_DELAY=0
+ENABLE_CHIP_DISTRIBUTION=false
+REALTIME_SOURCE_PRIORITY=tencent,akshare_sina,efinance,akshare_em
+
