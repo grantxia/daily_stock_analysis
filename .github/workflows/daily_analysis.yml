@@ -4,7 +4,7 @@ on:
   # 定时触发 - 每天北京时间 18:00 (UTC 10:00)
   schedule:
     - cron: '0 10 * * 1-5'     # 周一到周五，UTC 10:00 = 北京时间 18:00
-  
+
   # 手动触发
   workflow_dispatch:
     inputs:
@@ -33,29 +33,29 @@ jobs:
     runs-on: ubuntu-latest
     # 添加超时限制，防止任务卡死
     timeout-minutes: 30
-    
+
     steps:
       - name: 随机延迟（避免固定时间访问）
         run: sleep $((RANDOM % 60))  # 随机延迟0-60秒启动
-      
+
       - name: 检出代码
         uses: actions/checkout@v5
-      
+
       - name: 设置 Python 环境
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: 安装依赖
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: 创建必要目录
         run: |
           mkdir -p data logs reports
-      
+
       - name: 执行股票分析
         env:
           # ==========================================
@@ -66,13 +66,14 @@ jobs:
           LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_FALLBACK_MODELS: ${{ vars.LITELLM_FALLBACK_MODELS || secrets.LITELLM_FALLBACK_MODELS }}
 
           # Gemini AI（主选）
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
           GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
           GEMINI_REQUEST_DELAY: '3.0'
-          
+
           # AIHubMix（优先于 OPENAI_API_KEY，自动适配 base_url，推荐国内用户）
           AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
 
@@ -83,7 +84,7 @@ jobs:
 
           # DeepSeek
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          
+
           # Anthropic / Claude
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || secrets.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022' }}
@@ -104,7 +105,7 @@ jobs:
           LONGBRIDGE_ENABLE_OVERNIGHT: ${{ vars.LONGBRIDGE_ENABLE_OVERNIGHT || secrets.LONGBRIDGE_ENABLE_OVERNIGHT }}
           LONGBRIDGE_PUSH_CANDLESTICK_MODE: ${{ vars.LONGBRIDGE_PUSH_CANDLESTICK_MODE || secrets.LONGBRIDGE_PUSH_CANDLESTICK_MODE }}
           LONGBRIDGE_PRINT_QUOTE_PACKAGES: ${{ vars.LONGBRIDGE_PRINT_QUOTE_PACKAGES || secrets.LONGBRIDGE_PRINT_QUOTE_PACKAGES }}
-          
+
           # ==========================================
           # 搜索服务
           # ==========================================
@@ -115,45 +116,45 @@ jobs:
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
           SEARXNG_BASE_URLS: ${{ secrets.SEARXNG_BASE_URLS }}
           SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
-          
+
           # ==========================================
           # 通知渠道（可同时配置多个，全部推送）
           # ==========================================
-          
+
           # 方式一：企业微信 Webhook
           WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
           WECHAT_MSG_TYPE: ${{ vars.WECHAT_MSG_TYPE || secrets.WECHAT_MSG_TYPE || 'markdown' }}
-          
+
           # 方式二：飞书 Webhook
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-          
+
           # 方式三：Telegram
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
-          
+
           # 方式四：邮件
           EMAIL_SENDER: ${{ vars.EMAIL_SENDER || secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVERS: ${{ vars.EMAIL_RECEIVERS || secrets.EMAIL_RECEIVERS }}
           EMAIL_SENDER_NAME: ${{ vars.EMAIL_SENDER_NAME || secrets.EMAIL_SENDER_NAME || 'daily_stock_analysis股票分析助手' }}
-          
+
           # 方式五：Pushover
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_API_TOKEN: ${{ secrets.PUSHOVER_API_TOKEN }}
-          
+
           # 方式六：PushPlus ⬅️ 新增！
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          
+
           # 方式七：自定义 Webhook（钉钉、Bark、自建服务等）
           CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
           CUSTOM_WEBHOOK_BEARER_TOKEN: ${{ secrets.CUSTOM_WEBHOOK_BEARER_TOKEN }}
-          
+
           # 方式八：Discord
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_MAIN_CHANNEL_ID: ${{ secrets.DISCORD_MAIN_CHANNEL_ID }}
-          
+
           # 方式九：飞书云文档
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
@@ -176,7 +177,7 @@ jobs:
           # ==========================================
           STOCK_LIST: ${{ vars.STOCK_LIST || secrets.STOCK_LIST || '600519' }}
           MARKET_REVIEW_REGION: ${{ vars.MARKET_REVIEW_REGION || secrets.MARKET_REVIEW_REGION || 'cn' }}
-          
+
           # ==========================================
           # 运行配置 ⬅️ 新增！
           # ==========================================
@@ -187,7 +188,7 @@ jobs:
           TRADING_DAY_CHECK_ENABLED: ${{ vars.TRADING_DAY_CHECK_ENABLED || secrets.TRADING_DAY_CHECK_ENABLED || 'true' }}
           ENABLE_FUNDAMENTAL_PIPELINE: ${{ vars.ENABLE_FUNDAMENTAL_PIPELINE || secrets.ENABLE_FUNDAMENTAL_PIPELINE || 'true' }}
           REPORT_SUMMARY_ONLY: ${{ vars.REPORT_SUMMARY_ONLY || secrets.REPORT_SUMMARY_ONLY || 'false' }}
-          
+
           # ==========================================
           # 系统配置
           # ==========================================
@@ -199,7 +200,7 @@ jobs:
           # 可选值: tencent, akshare_sina, efinance, akshare_em, tushare
           # 如果有 Tushare Pro 高积分账号，可将 tushare 放在首位
           REALTIME_SOURCE_PRIORITY: ${{ vars.REALTIME_SOURCE_PRIORITY || 'tencent,akshare_sina,efinance,akshare_em' }}
-          
+
         run: |
           # 处理 LITELLM YAML 配置文件
           if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
@@ -213,7 +214,7 @@ jobs:
 
           # 判断运行模式
           MODE="${{ github.event.inputs.mode || 'full' }}"
-          
+
           echo "=========================================="
           echo "🚀 A股自选股智能分析系统"
           echo "=========================================="
@@ -266,7 +267,7 @@ jobs:
           echo "  Slack: $(([ -n "$SLACK_WEBHOOK_URL" ] || ([ -n "$SLACK_BOT_TOKEN" ] && [ -n "$SLACK_CHANNEL_ID" ])) && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "=========================================="
           echo ""
-          
+
           # 构建命令行参数
           FORCE_RUN_ARG=""
           if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
@@ -282,7 +283,7 @@ jobs:
           else
             python main.py $FORCE_RUN_ARG
           fi
-      
+
       - name: 上传分析报告
         uses: actions/upload-artifact@v6
         if: always()
@@ -292,7 +293,7 @@ jobs:
             reports/
             logs/
           retention-days: 30
-      
+
       - name: 显示运行结果
         if: always()
         run: |

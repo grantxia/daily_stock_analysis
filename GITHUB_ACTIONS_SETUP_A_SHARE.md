@@ -11,11 +11,15 @@
 按 `.github/actions/a_share_daily_secrets.example` 新建：
 - 必填：`FEISHU_WEBHOOK_URL`
 - 必填（至少一个）：`GEMINI_API_KEY` 或 `OPENAI_API_KEY`
+- 若按“`NVIDIA 主用 + DeepSeek 兜底`”方案：
+  - `OPENAI_API_KEY` 填 NVIDIA API Key
+  - `DEEPSEEK_API_KEY` 填 DeepSeek API Key
 - 建议：`TUSHARE_TOKEN`
 - 可选：`FEISHU_WEBHOOK_SECRET`、`FEISHU_WEBHOOK_KEYWORD`
 
 注意：
 - `FEISHU_APP_ID` / `FEISHU_APP_SECRET` 不是群 Webhook 推送必需项，不能替代 `FEISHU_WEBHOOK_URL`。
+- “New secret” 页面中的 `Name` 必须填写变量名本身（例如 `OPENAI_API_KEY`），不是说明文字。
 
 ## 3. 在 GitHub 配置 Variables
 路径：`Repository -> Settings -> Secrets and variables -> Actions -> Variables`
@@ -25,6 +29,11 @@
 - `REPORT_TYPE=full`
 - `ENABLE_FUNDAMENTAL_PIPELINE=true`
 - `MARKET_REVIEW_REGION=cn`
+- 若按“`NVIDIA 主用 + DeepSeek 兜底`”方案，再加：
+  - `LITELLM_MODEL=openai/meta/llama-3.1-70b-instruct`
+  - `LITELLM_FALLBACK_MODELS=deepseek/deepseek-chat`
+  - `OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1`
+  - `OPENAI_MODEL=meta/llama-3.1-70b-instruct`
 
 ## 4. 先手动跑一次验证
 路径：`Actions -> 每日股票分析 -> Run workflow`
@@ -41,4 +50,3 @@
 ## 6. 定时说明
 - 当前 cron：`0 10 * * 1-5`
 - 即：每个工作日 北京时间 18:00 自动执行
-

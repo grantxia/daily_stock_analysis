@@ -13,9 +13,14 @@ MARKET_REVIEW_ENABLED=true
 TRADING_DAY_CHECK_ENABLED=true
 SINGLE_STOCK_NOTIFY=false
 
+# Model strategy: NVIDIA primary + DeepSeek fallback
+LITELLM_MODEL=openai/meta/llama-3.1-70b-instruct
+LITELLM_FALLBACK_MODELS=deepseek/deepseek-chat
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+OPENAI_MODEL=meta/llama-3.1-70b-instruct
+
 # Stability/performance (recommended)
 MAX_WORKERS=1
 ANALYSIS_DELAY=0
 ENABLE_CHIP_DISTRIBUTION=false
 REALTIME_SOURCE_PRIORITY=tencent,akshare_sina,efinance,akshare_em
-
