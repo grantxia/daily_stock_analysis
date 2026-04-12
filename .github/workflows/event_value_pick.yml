@@ -1,0 +1,132 @@
+name: Event Value Pick
+
+on:
+  schedule:
+    - cron: "0 11 * * 1-5" # Beijing 19:00, Mon-Fri
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Run now (manual)"
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: event-value-pick
+  cancel-in-progress: false
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Prepare folders
+        run: mkdir -p reports logs
+
+      - name: Ensure latest event scan file
+        env:
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          INDUSTRY_WHITELIST: ${{ vars.INDUSTRY_WHITELIST || 'semiconductor,ai,electric equipment,biotech,advanced manufacturing' }}
+          EVENT_LOOKBACK_DAYS: ${{ vars.EVENT_LOOKBACK_DAYS || '14' }}
+          EVENT_CONFIDENCE_MIN: ${{ vars.EVENT_CONFIDENCE_MIN || '0.60' }}
+          EVENT_MAX_RESULTS_PER_INDUSTRY: ${{ vars.EVENT_MAX_RESULTS_PER_INDUSTRY || '6' }}
+          EVENT_TOP_N: ${{ vars.EVENT_TOP_N || '12' }}
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
+          LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
+            mkdir -p "$(dirname "$LITELLM_CONFIG")"
+            echo "$LITELLM_CONFIG_YAML" > "$LITELLM_CONFIG"
+          fi
+          python scripts/event_scan.py
+
+      - name: Run event-driven value pick
+        env:
+          # model + search
+          LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
+          LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_FALLBACK_MODELS: ${{ vars.LITELLM_FALLBACK_MODELS || secrets.LITELLM_FALLBACK_MODELS }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          ANSPIRE_API_KEYS: ${{ secrets.ANSPIRE_API_KEYS }}
+          SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
+          MINIMAX_API_KEYS: ${{ secrets.MINIMAX_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BOCHA_API_KEYS: ${{ secrets.BOCHA_API_KEYS }}
+          SEARXNG_BASE_URLS: ${{ secrets.SEARXNG_BASE_URLS }}
+          SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
+
+          # notify
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+
+          # data
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          LONGBRIDGE_APP_KEY: ${{ secrets.LONGBRIDGE_APP_KEY }}
+          LONGBRIDGE_APP_SECRET: ${{ secrets.LONGBRIDGE_APP_SECRET }}
+          LONGBRIDGE_ACCESS_TOKEN: ${{ secrets.LONGBRIDGE_ACCESS_TOKEN }}
+
+          # value-pick control
+          EVENT_CONFIDENCE_MIN: ${{ vars.EVENT_CONFIDENCE_MIN || '0.60' }}
+          VALUE_PICK_MAX_STOCKS: ${{ vars.VALUE_PICK_MAX_STOCKS || '12' }}
+          INDUSTRY_STOCK_MAP: ${{ vars.INDUSTRY_STOCK_MAP || '' }}
+          STOCK_LIST: ${{ vars.STOCK_LIST || secrets.STOCK_LIST || '600519,300750,002594' }}
+
+          # keep fundamental context enabled
+          ENABLE_FUNDAMENTAL_PIPELINE: ${{ vars.ENABLE_FUNDAMENTAL_PIPELINE || secrets.ENABLE_FUNDAMENTAL_PIPELINE || 'true' }}
+          FUNDAMENTAL_STAGE_TIMEOUT_SECONDS: ${{ vars.FUNDAMENTAL_STAGE_TIMEOUT_SECONDS || secrets.FUNDAMENTAL_STAGE_TIMEOUT_SECONDS || '3.0' }}
+          FUNDAMENTAL_FETCH_TIMEOUT_SECONDS: ${{ vars.FUNDAMENTAL_FETCH_TIMEOUT_SECONDS || secrets.FUNDAMENTAL_FETCH_TIMEOUT_SECONDS || '1.5' }}
+          FUNDAMENTAL_RETRY_MAX: ${{ vars.FUNDAMENTAL_RETRY_MAX || secrets.FUNDAMENTAL_RETRY_MAX || '2' }}
+          NEWS_MAX_AGE_DAYS: ${{ vars.NEWS_MAX_AGE_DAYS || secrets.NEWS_MAX_AGE_DAYS || '7' }}
+          NEWS_STRATEGY_PROFILE: ${{ vars.NEWS_STRATEGY_PROFILE || secrets.NEWS_STRATEGY_PROFILE || 'medium' }}
+        run: |
+          if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
+            mkdir -p "$(dirname "$LITELLM_CONFIG")"
+            echo "$LITELLM_CONFIG_YAML" > "$LITELLM_CONFIG"
+          fi
+          python scripts/event_value_pick.py
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: event-value-pick-${{ github.run_number }}
+          path: |
+            reports/
+            logs/
+          retention-days: 14

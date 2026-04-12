@@ -1,0 +1,77 @@
+name: Event Scan
+
+on:
+  schedule:
+    - cron: "30 10 * * 1-5" # Beijing 18:30, Mon-Fri
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Run now (manual)"
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: event-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Prepare folders
+        run: mkdir -p reports logs
+
+      - name: Run event scan
+        env:
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_KEYWORD: ${{ secrets.FEISHU_WEBHOOK_KEYWORD }}
+          INDUSTRY_WHITELIST: ${{ vars.INDUSTRY_WHITELIST || 'semiconductor,ai,electric equipment,biotech,advanced manufacturing' }}
+          EVENT_LOOKBACK_DAYS: ${{ vars.EVENT_LOOKBACK_DAYS || '14' }}
+          EVENT_CONFIDENCE_MIN: ${{ vars.EVENT_CONFIDENCE_MIN || '0.60' }}
+          EVENT_MAX_RESULTS_PER_INDUSTRY: ${{ vars.EVENT_MAX_RESULTS_PER_INDUSTRY || '6' }}
+          EVENT_TOP_N: ${{ vars.EVENT_TOP_N || '12' }}
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
+          LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
+            mkdir -p "$(dirname "$LITELLM_CONFIG")"
+            echo "$LITELLM_CONFIG_YAML" > "$LITELLM_CONFIG"
+          fi
+          python scripts/event_scan.py
+
+      - name: Upload event artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: event-scan-${{ github.run_number }}
+          path: |
+            reports/event_scan_latest.json
+            reports/event_scan_latest.md
+            logs/
+          retention-days: 14
