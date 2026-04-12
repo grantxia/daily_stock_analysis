@@ -104,6 +104,9 @@ jobs:
           # value-pick control
           EVENT_CONFIDENCE_MIN: ${{ vars.EVENT_CONFIDENCE_MIN || '0.60' }}
           VALUE_PICK_MAX_STOCKS: ${{ vars.VALUE_PICK_MAX_STOCKS || '12' }}
+          UNDERVALUE_SCORE_MIN: ${{ vars.UNDERVALUE_SCORE_MIN || '55' }}
+          INDUSTRY_PERCENTILE_WEIGHT: ${{ vars.INDUSTRY_PERCENTILE_WEIGHT || '0.45' }}
+          REQUIRE_VALUATION_DATA: ${{ vars.REQUIRE_VALUATION_DATA || 'false' }}
           INDUSTRY_STOCK_MAP: ${{ vars.INDUSTRY_STOCK_MAP || '' }}
           STOCK_LIST: ${{ vars.STOCK_LIST || secrets.STOCK_LIST || '600519,300750,002594' }}
 
