@@ -305,13 +305,29 @@ def main() -> int:
 
     feishu_webhook = (os.getenv("FEISHU_WEBHOOK_URL") or "").strip()
     if feishu_webhook:
+        tone_counts = {"positive": 0, "neutral": 0, "negative": 0}
+        industry_count = {}
+        for item in all_items:
+            tone_counts[item.tone] = tone_counts.get(item.tone, 0) + 1
+            industry_count[item.industry] = industry_count.get(item.industry, 0) + 1
+
+        top_industries = sorted(industry_count.items(), key=lambda x: x[1], reverse=True)[:4]
+        top_industry_text = ",".join([f"{name}({cnt})" for name, cnt in top_industries]) or "-"
+
         lines = [
-            f"Event scan done: {len(all_items)}",
-            f"Generated: {_now_str()}",
-            f"Lookback: {lookback_days}d",
+            f"\u3010\u884c\u4e1a\u4e8b\u4ef6\u626b\u63cf\u3011\u5171{len(all_items)}\u6761\uff08\u8fd1{lookback_days}\u5929\uff09",
+            f"- \u91cd\u70b9\u884c\u4e1a\uff1a{top_industry_text}",
+            (
+                f"- \u504f\u5229\u597d\uff1a{tone_counts.get('positive', 0)}\u6761\uff1b"
+                f"\u4e2d\u6027\uff1a{tone_counts.get('neutral', 0)}\u6761\uff1b"
+                f"\u504f\u5229\u7a7a\uff1a{tone_counts.get('negative', 0)}\u6761"
+            ),
         ]
-        for i, item in enumerate(all_items[:5], start=1):
-            lines.append(f"{i}) [{item.industry}] {item.title[:24]} | {item.tone} | {item.confidence:.2f}")
+        for i, item in enumerate(all_items[:3], start=1):
+            title = item.title.replace("\n", " ").strip()
+            lines.append(
+                f"{i}. [{item.industry}] {title[:26]} | {item.tone} | {item.confidence:.2f}"
+            )
         _send_feishu_text(feishu_webhook, "\n".join(lines))
 
     return 0

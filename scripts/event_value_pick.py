@@ -59,6 +59,17 @@ def _send_feishu_text(webhook_url: str, text: str) -> None:
         pass
 
 
+def _ordered_unique(items: List[str]) -> List[str]:
+    seen = set()
+    out: List[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
 def main() -> int:
     event_file = Path("reports/event_scan_latest.json")
     conf_min = float(os.getenv("EVENT_CONFIDENCE_MIN", "0.60"))
@@ -74,6 +85,7 @@ def main() -> int:
         industry = str(ev.get("industry", "")).strip()
         if tone == "positive" and confidence >= conf_min and industry:
             picked_industries.append(industry)
+    picked_industries = _ordered_unique(picked_industries)
 
     selected: List[str] = []
     seen: Set[str] = set()
@@ -92,10 +104,26 @@ def main() -> int:
 
     feishu_webhook = (os.getenv("FEISHU_WEBHOOK_URL") or "").strip()
     if feishu_webhook:
-        intro = (
-            "Event-driven candidate pool prepared\n"
-            f"Industries: {','.join(picked_industries) if picked_industries else 'fallback'}\n"
-            f"Stocks: {','.join(selected)}"
+        grouped_lines: List[str] = []
+        if picked_industries:
+            for ind in picked_industries:
+                codes = [c for c in stock_map.get(ind, []) if c in selected]
+                if codes:
+                    grouped_lines.append(f"- {ind}: {','.join(codes)}")
+        if not grouped_lines:
+            grouped_lines.append(f"- fallback: {','.join(selected)}")
+
+        intro = "\n".join(
+            [
+                f"\u3010\u4e8b\u4ef6\u9a71\u52a8\u5019\u9009\u6c60\u3011\u5171{len(selected)}\u53ea",
+                (
+                    f"- \u8986\u76d6\u884c\u4e1a\uff1a{','.join(picked_industries)}"
+                    if picked_industries
+                    else "- \u8986\u76d6\u884c\u4e1a\uff1a\u65e0\u9ad8\u7f6e\u4fe1\u4e8b\u4ef6\uff0c\u4f7f\u7528\u515c\u5e95\u6c60"
+                ),
+                *grouped_lines,
+                "\u63d0\u793a\uff1a\u4ec5\u4e3a\u7814\u7a76\u5019\u9009\u6c60\uff0c\u4e0d\u6784\u6210\u6295\u8d44\u5efa\u8bae\u3002",
+            ]
         )
         try:
             _send_feishu_text(feishu_webhook, intro)
