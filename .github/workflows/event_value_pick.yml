@@ -40,7 +40,7 @@ jobs:
       - name: Ensure latest event scan file
         env:
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.EVENT_FEISHU_WEBHOOK_URL || secrets.FEISHU_WEBHOOK_URL }}
           INDUSTRY_WHITELIST: ${{ vars.INDUSTRY_WHITELIST || 'semiconductor,ai,electric equipment,biotech,advanced manufacturing' }}
           EVENT_LOOKBACK_DAYS: ${{ vars.EVENT_LOOKBACK_DAYS || '14' }}
           EVENT_CONFIDENCE_MIN: ${{ vars.EVENT_CONFIDENCE_MIN || '0.60' }}
@@ -89,7 +89,7 @@ jobs:
           SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
 
           # notify
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.EVENT_FEISHU_WEBHOOK_URL || secrets.FEISHU_WEBHOOK_URL }}
           WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
